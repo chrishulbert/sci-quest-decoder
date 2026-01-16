@@ -1,7 +1,7 @@
 // This is responsible for coordinating the whole decoding process.
 
 use crate::map;
-// use crate::picture;
+use crate::resource_files;
 // use crate::resources;
 // use crate::volumes;
 // use crate::view;
@@ -9,10 +9,16 @@ use crate::map;
 
 pub fn decode(path: &str) {
     let map = map::Map::read(path);
-    println!("Map: {:#?}", map);
+    let files = resource_files::Files::read(path);
 
-    let pics = map.entries.iter().filter(|e|e.resource_type == map::ResourceType::Pic).count();
-    println!("Pics: {}", pics);
+    // let mut x: HashSet<usize> = HashSet::new();
+    // for e in &map.entries {
+    //     x.insert(e.file);
+    // }
+    // println!("Files: {:#?}", x);
+
+    // let pics = map.entries.iter().filter(|e|e.resource_type == map::ResourceType::Pic).count();
+    // println!("Pics: {}", pics);
     // let directories = directories::Directories::read(path)?;
     // println!("Logic entries: {}", directories.logic.entries.len());
     // println!("Sounds entries: {}", directories.sounds.entries.len());
