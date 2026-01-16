@@ -1,4 +1,4 @@
-// This is responsible for loading the resource.00x into memory.
+// This is responsible for loading the resource.00x files into memory.
 
 use std::collections::HashMap;
 
@@ -10,7 +10,7 @@ impl Files {
     pub fn read(path: &str) -> Files {
         let mut files: HashMap<usize, Vec<u8>> = HashMap::new();
         for i in 1..999 {
-            let vol_path = format!("{}/resource.{}", path, i);
+            let vol_path = format!("{}/resource.{:03}", path, i);
             let exists = std::fs::exists(&vol_path).unwrap();
             if !exists { break }
             let content = std::fs::read(&vol_path).unwrap();

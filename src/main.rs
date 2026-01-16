@@ -1,6 +1,7 @@
 mod map;
 mod decode;
 mod resource_files;
+mod resource_reader;
 
 fn main() {
     println!("-=[ SCI Quest Decoder ]=-");
