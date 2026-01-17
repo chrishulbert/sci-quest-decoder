@@ -74,23 +74,13 @@ fn scaled_rgbas_from_cel(cel: &Cel) -> Vec<u32> {
     let scaled_square = xbrz::scale(bigger_dimension as u8, &unscaled_rgbas, cel.width as u32, cel.height as u32);
     // Now descale to the aspect we want:
     // This will only work for 5x6.
-    let scaled_width = cel.width * WIDTH_MULTIPLIER;
-    let chunk_size_for_original_row = scaled_width * WIDTH_MULTIPLIER;
     let mut scaled_aspect: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * cel.height * HEIGHT_MULTIPLIER);
-    for chunk in scaled_square.chunks_exact(chunk_size_for_original_row) {
-        let row_0 = &chunk[0..scaled_width];
-        let row_1 = &chunk[scaled_width..(scaled_width*2)];
-        let row_2 = &chunk[(scaled_width*2)..(scaled_width*3)];
-        let row_3 = &chunk[(scaled_width*3)..(scaled_width*4)];
-        let row_4 = &chunk[(scaled_width*4)..(scaled_width*5)];
-        let row_5 = &chunk[(scaled_width*5)..];
-        scaled_aspect.extend_from_slice(row_0);
-        scaled_aspect.extend_from_slice(row_1);
-        for (&a, &b) in row_2.iter().zip(row_3) {
-            scaled_aspect.push(interpolate_rgba(a, b));
-        }
-        scaled_aspect.extend_from_slice(row_4);
-        scaled_aspect.extend_from_slice(row_5);
+    for chunk in scaled_square.chunks_exact(bigger_dimension) {
+        scaled_aspect.push(chunk[0]);
+        scaled_aspect.push(chunk[1]);
+        scaled_aspect.push(interpolate_rgba(chunk[2], chunk[3]));
+        scaled_aspect.push(chunk[4]);
+        scaled_aspect.push(chunk[5]);
     }
     scaled_aspect
 
