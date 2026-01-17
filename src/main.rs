@@ -7,6 +7,8 @@ mod bitstream;
 mod view;
 mod png;
 mod palette;
+mod renderer;
+mod xbrz;
 
 fn main() {
     println!("-=[ SCI Quest Decoder ]=-");

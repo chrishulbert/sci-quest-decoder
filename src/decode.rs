@@ -4,28 +4,33 @@ use crate::map;
 use crate::resource_files;
 use crate::resource_reader;
 use crate::view;
-// use crate::renderer;
+use crate::renderer;
 
 pub fn decode(path: &str) {
     let map = map::Map::read(path);
     let files = resource_files::Files::read(path);
 
-    // let mut x: HashSet<usize> = HashSet::new();
-    // for e in &map.entries {
-    //     x.insert(e.file);
-    // }
-    // println!("Files: {:#?}", x);
+    for (vi, entry) in map.entries.iter().enumerate() {
+        if entry.resource_type != map::ResourceType::View { continue }
+        let resource = resource_reader::read(entry, &files);
+        let view = view::View::parse(&resource);
+        for (li, l) in view.loops.iter().enumerate() {
+            if renderer::is_animation(l) {
+                // Animated.
+                let name = format!("Output.view.{}.{}.animation.png", vi, li);
+                let png = renderer::apng_from_loop(l);
+                std::fs::write(name, png).unwrap();
+            } else {
+                // Not animated.
+                for (ci, c) in l.cels.iter().enumerate() {
+                    let name = format!("Output.view.{}.{}.{}.static.png", vi, li, ci);
+                    let png = renderer::png_from_cel(c);
+                    std::fs::write(name, png).unwrap();
+                }
+            }
+        }
+    }
 
-    // let pics = map.entries.iter().filter(|e|e.resource_type == map::ResourceType::Pic).count();
-    // println!("Pics: {}", pics);
-    // let directories = directories::Directories::read(path)?;
-    // println!("Logic entries: {}", directories.logic.entries.len());
-    // println!("Sounds entries: {}", directories.sounds.entries.len());
-    // println!("Views entries: {}", directories.views.entries.len());
-    // println!("Pictures entries: {}", directories.pictures.entries.len());
-    // let volumes = volumes::read(path)?;
-    // let resources = resources::Resources::parse(&volumes, &directories)?;
-    
     // for (pi, resource) in resources.pictures.iter().enumerate() {
     //     if resource.is_empty() { continue }
     //     let picture = picture::Picture::parse(&resource);
@@ -33,25 +38,4 @@ pub fn decode(path: &str) {
     //     let png = renderer::png_from_picture(&picture);
     //     std::fs::write(name, png)?;
     // }
-
-    // for (vi, resource) in resources.views.iter().enumerate() {
-    //     if resource.is_empty() { continue }
-    //     let view = view::View::parse(&resource)?;
-    //     for (li, l) in view.loops.iter().enumerate() {
-    //         if renderer::is_animation(l) {
-    //             // Animated.
-    //             let name = format!("Output.view.{}.{}.animation.png", vi, li);
-    //             let png = renderer::apng_from_loop(l);
-    //             std::fs::write(name, png)?;
-    //         } else {
-    //             // Not animated.
-    //             for (ci, c) in l.cels.iter().enumerate() {
-    //                 let name = format!("Output.view.{}.{}.{}.static.png", vi, li, ci);
-    //                 let png = renderer::png_from_cel(c);
-    //                 std::fs::write(name, png)?;
-    //             }
-    //         }
-    //     }
-    // }
-    // Ok(())
 }
