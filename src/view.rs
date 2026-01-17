@@ -19,7 +19,7 @@ impl View {
             // Read the loop.
             let loop_data = &data[position..];
             let is_mirrored = (mirror_flags >> i) & 1 != 0;
-            let view_loop = Loop::parse(loop_data, is_mirrored);
+            let view_loop = Loop::parse(loop_data, data, is_mirrored);
             loops.push(view_loop);
         }
         View{ loops }
@@ -30,14 +30,14 @@ pub struct Loop {
     pub cels: Vec<Cel>,
 }
 impl Loop {
-    fn parse(data: &[u8], is_mirrored: bool) -> Loop {
+    fn parse(data: &[u8], resource: &[u8], is_mirrored: bool) -> Loop {
         let count = (data[0] as usize) + ((data[1] as usize) << 8);
         // 2-3 is unknown.
         let positions_onwards = &data[4..];
         let positions_data = &positions_onwards[..(count*2)];
         let positions: Vec<usize> = positions_data.chunks_exact(2).map(parse_2_byte_le).collect();
         let cels: Vec<Cel> = positions.iter().map(|&p| {
-            Cel::parse(&data[p..], is_mirrored)
+            Cel::parse(&resource[p..], is_mirrored)
         }).collect();
         Loop { cels }
     }

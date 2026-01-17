@@ -2,9 +2,8 @@
 
 use crate::map;
 use crate::resource_files;
-// use crate::resources;
-// use crate::volumes;
-// use crate::view;
+use crate::resource_reader;
+use crate::view;
 // use crate::renderer;
 
 pub fn decode(path: &str) {
