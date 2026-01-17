@@ -9,8 +9,8 @@
 pub struct BitStream<'a> {
     data: &'a [u8],
     index: usize,
-    bit_buffer: u32,
-    bits_in_buffer: u32,
+    bit_buffer: usize,
+    bits_in_buffer: usize,
 }
 
 impl<'a> BitStream<'a> {
@@ -18,7 +18,7 @@ impl<'a> BitStream<'a> {
         BitStream { data, index: 0, bit_buffer: 0, bits_in_buffer: 0 }
     }
 
-    fn next(&mut self, bits_wanted: u32) -> u32 {
+    pub fn next(&mut self, bits_wanted: usize) -> usize {
         assert!(1 <= bits_wanted && bits_wanted <= 16);
 
         // Fetch more from data to top up the buffer.
@@ -26,7 +26,7 @@ impl<'a> BitStream<'a> {
             // Grab another byte, add it to bit_buffer, shifted to the significant end.
             let byte = self.data[self.index];
             self.index += 1;
-            self.bit_buffer += (byte as u32) << self.bits_in_buffer;
+            self.bit_buffer += (byte as usize) << self.bits_in_buffer;
             self.bits_in_buffer += 8;
         }
 
