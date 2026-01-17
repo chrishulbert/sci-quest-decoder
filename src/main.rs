@@ -4,6 +4,9 @@ mod resource_files;
 mod resource_reader;
 mod lzw;
 mod bitstream;
+mod view;
+mod png;
+mod palette;
 
 fn main() {
     println!("-=[ SCI Quest Decoder ]=-");
