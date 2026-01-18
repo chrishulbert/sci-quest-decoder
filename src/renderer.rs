@@ -8,8 +8,11 @@ use crate::xbrz;
 
 // The game is originally rendered at 320x200 on a 4:3 screen, so pixels are 1.2x higher than wide.
 // Resizing at 5w x 6h preserves this ratio.
-const WIDTH_MULTIPLIER: usize = 5;
-const HEIGHT_MULTIPLIER: usize = 6;
+// const WIDTH_MULTIPLIER: usize = 5;
+// const HEIGHT_MULTIPLIER: usize = 6;
+const WIDTH_MULTIPLIER: usize = 3;
+const HEIGHT_MULTIPLIER: usize = 3;
+const USE_XBRZ: bool = false;
 
 // It's eligible to be an animation even if sizes are different.
 // Padding is added to the top and right, which seems to align cels nicely on space quest.
@@ -68,12 +71,39 @@ fn pad_cel(cel: &Cel, width: usize, height: usize) -> Cel {
 
 // This converts an unscaled cel to scaled rgbas.
 fn scaled_rgbas_from_cel(cel: &Cel) -> Vec<u32> {
+    if USE_XBRZ {
+        scaled_rgbas_from_cel_xbrz(cel)
+    } else {
+        scaled_rgbas_from_cel_nearest_neighbour(cel)
+    }
+}
+
+fn scaled_rgbas_from_cel_nearest_neighbour(cel: &Cel) -> Vec<u32> {
+    let mut rgbas: Vec<u32> = Vec::with_capacity(cel.width * cel.height * WIDTH_MULTIPLIER * HEIGHT_MULTIPLIER);
+    for row in cel.pixels.chunks_exact(cel.width) {
+        for _ in 0..HEIGHT_MULTIPLIER {
+            for p in row {
+                let rgba = PALETTE[*p as usize];
+                for _ in 0..WIDTH_MULTIPLIER {
+                    rgbas.push(rgba);
+                }
+            }
+        }
+    }
+    rgbas
+}
+
+fn scaled_rgbas_from_cel_xbrz(cel: &Cel) -> Vec<u32> {
+    // Scale up using xbrz:
     let unscaled_rgbas: Vec<u32> = cel.pixels.iter().map(|p| PALETTE[*p as usize]).collect();
-    // Scale using xbrz - this only really works if the multipliers are 5 and 3:
     let bigger_dimension = HEIGHT_MULTIPLIER.max(WIDTH_MULTIPLIER);
     let scaled_square = xbrz::scale(bigger_dimension as u8, &unscaled_rgbas, cel.width as u32, cel.height as u32);
-    // Now descale to the aspect we want:
-    // This will only work for 5x6.
+    if WIDTH_MULTIPLIER == HEIGHT_MULTIPLIER {
+        return scaled_square
+    }
+    // For 5x6, we can tweak to get the perfect aspect ratio:
+    assert!(WIDTH_MULTIPLIER == 5);
+    assert!(HEIGHT_MULTIPLIER == 6);
     let mut scaled_aspect: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * cel.height * HEIGHT_MULTIPLIER);
     for chunk in scaled_square.chunks_exact(bigger_dimension) {
         scaled_aspect.push(chunk[0]);
@@ -83,20 +113,6 @@ fn scaled_rgbas_from_cel(cel: &Cel) -> Vec<u32> {
         scaled_aspect.push(chunk[5]);
     }
     scaled_aspect
-
-    // Nearest-neighbour scaling:
-    // let mut rgbas: Vec<u32> = Vec::with_capacity(cel.width * cel.height * WIDTH_MULTIPLIER * HEIGHT_MULTIPLIER);
-    // for row in cel.pixels.chunks_exact(cel.width) {
-    //     for _ in 0..HEIGHT_MULTIPLIER {
-    //         for p in row {
-    //             let rgba = PALETTE[*p as usize];
-    //             for _ in 0..WIDTH_MULTIPLIER {
-    //                 rgbas.push(rgba);
-    //             }
-    //         }
-    //     }
-    // }
-    // rgbas
 }
 
 fn interpolate_rgba(x: u32, y: u32) -> u32 {
