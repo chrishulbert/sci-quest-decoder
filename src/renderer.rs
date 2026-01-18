@@ -8,10 +8,10 @@ use crate::xbrz;
 
 // The game is originally rendered at 320x200 on a 4:3 screen, so pixels are 1.2x higher than wide.
 // Resizing at 5w x 6h preserves this ratio.
-// const WIDTH_MULTIPLIER: usize = 5;
-// const HEIGHT_MULTIPLIER: usize = 6;
-const WIDTH_MULTIPLIER: usize = 3;
-const HEIGHT_MULTIPLIER: usize = 3;
+const WIDTH_MULTIPLIER: usize = 5;
+const HEIGHT_MULTIPLIER: usize = 6;
+// const WIDTH_MULTIPLIER: usize = 3;
+// const HEIGHT_MULTIPLIER: usize = 3;
 const USE_XBRZ: bool = false;
 
 // It's eligible to be an animation even if sizes are different.
