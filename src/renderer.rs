@@ -93,6 +93,107 @@ fn scaled_rgbas_from_cel_nearest_neighbour(cel: &Cel) -> Vec<u32> {
     rgbas
 }
 
+fn scaled_rgbas_from_cel_crt(cel: &Cel) -> Vec<u32> {
+    if WIDTH_MULTIPLIER == 6 && HEIGHT_MULTIPLIER == 6 {
+        scaled_rgbas_from_cel_crt_6(cel)
+    } else if WIDTH_MULTIPLIER == 3 && HEIGHT_MULTIPLIER == 3 {
+        scaled_rgbas_from_cel_crt_3(cel)
+    } else {
+        panic!("CRT scaling only supports 6x6 or 3x3!");
+    }
+}
+
+fn scaled_rgbas_from_cel_crt_6(cel: &Cel) -> Vec<u32> {
+    // Convert into this pattern:
+    // rrggbb
+    // rrggbb
+    // gbbrrg
+    // gbbrrg
+    // rrggbb
+    // rrggbb
+    assert!(WIDTH_MULTIPLIER == 6);
+    assert!(HEIGHT_MULTIPLIER == 6);
+    let mut rgbas: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * cel.height * HEIGHT_MULTIPLIER);
+    let mut line_rgb: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER);
+    let mut line_gbr: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER);
+    for (i, row) in cel.pixels.chunks_exact(cel.width).enumerate() {
+        line_rgb.clear();
+        line_gbr.clear();
+        for pixel in row {
+            let rgba = PALETTE[*pixel as usize];
+            let r = rgba & 0xff0000ff;
+            let g = rgba & 0xff00ff;
+            let b = rgba & 0xffff;
+            line_rgb.push(r);
+            line_rgb.push(r);
+            line_rgb.push(g);
+            line_rgb.push(g);
+            line_rgb.push(b);
+            line_rgb.push(b);
+            line_gbr.push(g);
+            line_gbr.push(b);
+            line_gbr.push(b);
+            line_gbr.push(r);
+            line_gbr.push(r);
+            line_gbr.push(g);
+        }
+        let is_odd = i & 1 != 0;
+        if is_odd {
+            rgbas.extend_from_slice(&line_rgb);
+            rgbas.extend_from_slice(&line_rgb);
+            rgbas.extend_from_slice(&line_gbr);
+            rgbas.extend_from_slice(&line_gbr);
+            rgbas.extend_from_slice(&line_rgb);
+            rgbas.extend_from_slice(&line_rgb);
+        } else {
+            rgbas.extend_from_slice(&line_gbr);
+            rgbas.extend_from_slice(&line_gbr);
+            rgbas.extend_from_slice(&line_rgb);
+            rgbas.extend_from_slice(&line_rgb);
+            rgbas.extend_from_slice(&line_gbr);
+            rgbas.extend_from_slice(&line_gbr);
+        }
+    }
+    rgbas
+}
+
+fn scaled_rgbas_from_cel_crt_3(cel: &Cel) -> Vec<u32> {
+    // Convert into this pattern:
+    // rgb
+    // brg
+    // gbr
+    assert!(WIDTH_MULTIPLIER == 3);
+    assert!(HEIGHT_MULTIPLIER == 3);
+    let mut rgbas: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * cel.height * HEIGHT_MULTIPLIER);
+    let mut line_rgb: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER);
+    let mut line_brg: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER);
+    let mut line_gbr: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER);
+    for row in cel.pixels.chunks_exact(cel.width) {
+        line_rgb.clear();
+        line_brg.clear();
+        line_gbr.clear();
+        for pixel in row {
+            let rgba = PALETTE[*pixel as usize];
+            let r = rgba & 0xff0000ff;
+            let g = rgba & 0xff00ff;
+            let b = rgba & 0xffff;
+            line_rgb.push(r);
+            line_rgb.push(g);
+            line_rgb.push(b);
+            line_brg.push(b);
+            line_brg.push(r);
+            line_brg.push(g);
+            line_gbr.push(g);
+            line_gbr.push(b);
+            line_gbr.push(r);
+        }
+        rgbas.extend_from_slice(&line_rgb);
+        rgbas.extend_from_slice(&line_brg);
+        rgbas.extend_from_slice(&line_gbr);
+    }
+    rgbas
+}
+
 fn scaled_rgbas_from_cel_xbrz(cel: &Cel) -> Vec<u32> {
     // Scale up using xbrz:
     let unscaled_rgbas: Vec<u32> = cel.pixels.iter().map(|p| PALETTE[*p as usize]).collect();
