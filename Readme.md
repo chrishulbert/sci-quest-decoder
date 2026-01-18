@@ -19,7 +19,9 @@ This generates big uncompressed PNGs. To compress them, install `pngquant` and `
 
 ## New Years Mystery
 
-Includes [Doan Sephim's New Years Mystery](https://sciprogramming.com/fangames.php?action=review&id=3) SCI fangame so you can run this without needing a game.
+![Mystery](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn160.f1.vi50.li1.animation.png)
+
+Includes [Doan Sephim's New Years Mystery](https://sciprogramming.com/fangames.php?action=review&id=3) SCI fangame so you can run this without needing a game. Thankyou so much for allowing this, Ryan!
 
 ## References
 
