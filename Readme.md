@@ -23,6 +23,24 @@ This generates big uncompressed PNGs. To compress them, install `pngquant` and `
 
 Includes [Doan Sephim's New Years Mystery](https://sciprogramming.com/fangames.php?action=review&id=3) SCI fangame so you can run this without needing a game. Thankyou so much for allowing this, Ryan!
 
+## Others
+
+![Scuba](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn12.f2.vi353.li0.animation.png)
+
+If you're interested, I also wrote decoders for the following:
+
+![Root Monster](https://github.com/chrishulbert/agi-quest-decoder/raw/main/readme/RootMonster.png)
+
+* Sierra AGI: https://github.com/chrishulbert/agi-quest-decoder
+
+![Digging](https://github.com/chrishulbert/digger-decoder/raw/main/readme/digging.png)
+
+* Lemmings: https://github.com/chrishulbert/digger-decoder
+
+![Dopefish](https://github.com/chrishulbert/dopefish-decoder/raw/main/Dopefish.png)
+
+* Commander Keen: https://github.com/chrishulbert/dopefish-decoder
+
 ## References
 
 ![Rotating wireframe](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn42.f1.vi126.li1.animation.png)
