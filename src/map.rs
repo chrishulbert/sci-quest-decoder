@@ -2,6 +2,8 @@
 // https://wiki.scummvm.org/index.php?title=SCI/Specifications/Resource_files/SCI0_resources
 // https://github.com/scummvm/scummvm/blob/master/engines/sci/resource/resource.cpp
 
+use std::collections::HashSet;
+
 #[derive(Debug)]
 pub struct Map {
     pub entries: Vec<Entry>,
@@ -47,11 +49,13 @@ impl Map {
     pub fn read(path: &str) -> Map {
         let path = format!("{}/resource.map", path);
         let data = std::fs::read(path).unwrap();
+        let mut ids: HashSet<usize> = HashSet::new();
         let mut entries: Vec<Entry> = Vec::new();
         for chunk in data.chunks_exact(6) {
-            if let Some(entry) = Entry::from_data(chunk) {
-                entries.push(entry);
-            }
+            let Some(entry) = Entry::from_data(chunk) else { continue };
+            if ids.contains(&entry.id) { continue } // Since many common resources are stored on multiple disks, only add them once.
+            ids.insert(entry.id);
+            entries.push(entry);
         }
         Map { entries }
     }

@@ -17,13 +17,13 @@ pub fn decode(path: &str) {
         for (li, l) in view.loops.iter().enumerate() {
             if renderer::is_animation(l) {
                 // Animated.
-                let name = format!("Output.view.{}.{}.animation.png", vi, li);
+                let name = format!("Output.view.rn{}.f{}.vi{}.li{}.animation.png", entry.resource_number, entry.file, vi, li);
                 let png = renderer::apng_from_loop(l);
                 std::fs::write(name, png).unwrap();
             } else {
                 // Not animated.
                 for (ci, c) in l.cels.iter().enumerate() {
-                    let name = format!("Output.view.{}.{}.{}.static.png", vi, li, ci);
+                    let name = format!("Output.view.rn{}.f{}.vi{}.li{}.ci{}.static.png", entry.resource_number, entry.file, vi, li, ci);
                     let png = renderer::png_from_cel(c);
                     std::fs::write(name, png).unwrap();
                 }
