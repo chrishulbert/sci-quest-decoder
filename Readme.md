@@ -2,9 +2,14 @@
 
 ![Aluminum Mallard](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn44.f3.vi581.li1.ci0.static.png)
 
-This decodes and extracts the graphics from classic Sierra SCI adventure games such as Space Quest 3 and Police Quest 2.
+This decodes and extracts the graphics from [classic Sierra SCI adventure games](https://sciwiki.sierrahelp.com/index.php/Sierra_SCI_Release_List#SCI0_.28late.29) such as Space Quest 3 and Police Quest 2.
+
+![Plaid](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn60.f1.vi184.li7.animation.png)
 
 To use this, run: `make run` - this will run against the assets of the built-in SCI fangame "New Years Mystery".
+
+![Larry](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn716.f1.vi217.li0.animation.png)
+![Patti](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn816.f1.vi219.li0.animation.png)
 
 If you have Space Quest 3 or Police Quest 2, put them in `data/sq3` or `data/pq2` then run `make run-sq3` or `make run-pq2`.
 

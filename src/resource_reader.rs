@@ -41,7 +41,7 @@ fn decompress(content: &[u8], decompressed_size: usize, method: usize) -> Vec<u8
     } else if method == METHOD_LZW {
         lzw::decompress(content, decompressed_size)
     } else if method == METHOD_HUFFMAN {
-        vec![]
+        panic!("Huffman decompression not implemented!");
     } else {
         panic!("Unknown compression method: {}", method);
     }

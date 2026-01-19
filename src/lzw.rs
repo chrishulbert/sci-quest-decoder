@@ -1,7 +1,7 @@
 // This is responsible for decompressing LZW data.
 // https://github.com/scummvm/scummvm/blob/master/engines/sci/resource/decompressor.cpp
 
-use crate::bitstream;
+use crate::bitstream_lsb;
 
 pub fn decompress(src: &[u8], decompressed_size: usize) -> Vec<u8> {
     const INITIAL_CODE_BIT_LENGTH: usize = 9;
@@ -15,7 +15,7 @@ pub fn decompress(src: &[u8], decompressed_size: usize) -> Vec<u8> {
     let mut string_offsets: Vec<usize> = vec![0; MAX_TABLE_SIZE]; // 0-257: unused
     let mut string_lengths: Vec<usize> = vec![0; MAX_TABLE_SIZE];
 
-    let mut stream = bitstream::BitStream::new(src);
+    let mut stream = bitstream_lsb::BitStreamLSB::new(src);
     let mut out: Vec<u8> = Vec::new();
 
 	while out.len() < decompressed_size {

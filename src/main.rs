@@ -1,13 +1,15 @@
-mod map;
+mod bitstream_lsb;
+mod bitstream_msb;
 mod decode;
+mod huffman;
+mod lzw;
+mod map;
+mod palette;
+mod png;
+mod renderer;
 mod resource_files;
 mod resource_reader;
-mod lzw;
-mod bitstream;
 mod view;
-mod png;
-mod palette;
-mod renderer;
 mod xbrz;
 
 fn main() {

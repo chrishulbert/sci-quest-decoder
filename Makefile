@@ -10,6 +10,12 @@ run-sq3:
 run-pq2:
 	RUST_BACKTRACE=1 cargo run data/pq2
 
+run-lsl2:
+	RUST_BACKTRACE=1 cargo run data/lsl2
+
+run-lsl3:
+	RUST_BACKTRACE=1 cargo run data/lsl3
+
 build:
 	cargo build
 

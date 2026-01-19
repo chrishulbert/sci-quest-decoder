@@ -6,16 +6,16 @@
 // It will return bits in the following order:
 // A0-7 B0-7 C0-7 D0-7
 
-pub struct BitStream<'a> {
+pub struct BitStreamLSB<'a> {
     data: &'a [u8],
     index: usize,
     bit_buffer: usize,
     bits_in_buffer: usize,
 }
 
-impl<'a> BitStream<'a> {
+impl<'a> BitStreamLSB<'a> {
     pub fn new(data: &'a [u8]) -> Self {
-        BitStream { data, index: 0, bit_buffer: 0, bits_in_buffer: 0 }
+        BitStreamLSB { data, index: 0, bit_buffer: 0, bits_in_buffer: 0 }
     }
 
     pub fn next(&mut self, bits_wanted: usize) -> usize {
@@ -48,7 +48,7 @@ mod tests {
         // First:                      43210
         // Next:                    210              543
         // Last:                                43210       cba98765
-        let mut stream= BitStream::new(&input);
+        let mut stream= BitStreamLSB::new(&input);
         let first_5 = stream.next(5);
         let next_6 = stream.next(6);
         let last_13 = stream.next(13);

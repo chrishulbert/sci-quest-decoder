@@ -21,7 +21,7 @@ pub struct Entry {
 #[derive(Debug, PartialEq)]
 pub enum ResourceType {
 	View,
-    Pic,
+    Picture,
     Script,
     Text,
 	Sound,
@@ -86,7 +86,7 @@ impl ResourceType {
     fn from(value: usize) -> ResourceType {
         match value {
             0 => ResourceType::View,
-            1 => ResourceType::Pic,
+            1 => ResourceType::Picture,
             2 => ResourceType::Script,
             3 => ResourceType::Text,
             4 => ResourceType::Sound,
