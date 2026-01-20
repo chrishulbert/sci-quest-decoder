@@ -5,16 +5,19 @@
 use crate::bitstream_msb::{self, BitStreamMSB};
 
 pub fn decompress(src: &[u8], decompressed_size: usize) -> Vec<u8> {
+    // Get the header info from the data:
     let node_count = src[0] as usize;
     let terminator = src[1];
     let node_size = node_count * 2;
     let nodes_data = &src[2..(2 + node_size)];
     let data = &src[(2 + node_size)..];
 
+    // Parse it into nodes / prep it into a bitstream:
     let nodes: Vec<Node> = nodes_data.chunks_exact(2).map(Node::from).collect();
     let mut bitstream = bitstream_msb::BitStreamMSB::new(data);
     let mut out: Vec<u8> = Vec::with_capacity(decompressed_size);
-    
+
+    // Loop pulling a byte at a time until we hit a terminator or decompress enough bytes:
     loop {
         let (byte, is_bitstream_literal) = get_next_byte(&mut bitstream, &nodes);
         if is_bitstream_literal && byte == terminator { break }
