@@ -6,6 +6,7 @@
 use crate::resource_files::Files;
 use crate::map::Entry;
 use crate::lzw;
+use crate::huffman;
 
 const METHOD_UNCOMPRESSED: usize = 0;
 const METHOD_LZW: usize = 1;
@@ -41,7 +42,7 @@ fn decompress(content: &[u8], decompressed_size: usize, method: usize) -> Vec<u8
     } else if method == METHOD_LZW {
         lzw::decompress(content, decompressed_size)
     } else if method == METHOD_HUFFMAN {
-        panic!("Huffman decompression not implemented!");
+        huffman::decompress(content, decompressed_size)
     } else {
         panic!("Unknown compression method: {}", method);
     }
