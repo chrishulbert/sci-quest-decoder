@@ -3,6 +3,7 @@
 
 use crate::view::{Loop, Cel};
 use crate::png;
+use crate::picture;
 use crate::palette::{PALETTE, TRANSPARENT};
 use crate::xbrz;
 
@@ -41,14 +42,14 @@ pub fn png_from_cel(cel: &Cel) -> Vec<u8> {
         &scaled_rgbas_from_cel(cel))
 }
 
-// pub fn png_from_picture(picture: &picture::Picture) -> Vec<u8> {
-//     let cel: Cel = Cel {
-//         width: picture::WIDTH,
-//         height: picture::HEIGHT,
-//         pixels: picture.picture.clone(),
-//     };
-//     png_from_cel(&cel)
-// }
+pub fn png_from_picture(picture: &picture::Picture) -> Vec<u8> {
+    let cel: Cel = Cel {
+        width: picture::WIDTH,
+        height: picture::HEIGHT,
+        pixels: picture.picture.clone(),
+    };
+    png_from_cel(&cel)
+}
 
 // Increase the width/height of a cel.
 fn pad_cel(cel: &Cel, width: usize, height: usize) -> Cel {

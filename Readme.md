@@ -57,5 +57,7 @@ If you're interested, I also wrote decoders for the following:
 * https://wiki.scummvm.org/index.php?title=SCI/Specifications
 * https://github.com/scummvm/scummvm/tree/master/engines/sci
 * https://slattstudio.com
+* https://github.com/wjp/freesci-archive
+* https://sciwiki.sierrahelp.com/index.php/SCI_Specifications
 
 ![Goodbye](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn67.f2.vi279.li4.animation.png)

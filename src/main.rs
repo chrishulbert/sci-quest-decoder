@@ -5,6 +5,8 @@ mod huffman;
 mod lzw;
 mod map;
 mod palette;
+mod picture_splitter;
+mod picture;
 mod png;
 mod renderer;
 mod resource_files;
