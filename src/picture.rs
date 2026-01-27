@@ -435,11 +435,12 @@ fn draw_short_relative_lines(picture: &mut [u8], colour: u8, arguments: &[u8]) {
 }
 
 fn fill(picture: &mut [u8], colour: u8, arguments: &[u8]) {
-    //println!("Fill args: {}", arguments.len());
+    if colour == palette::WHITE { return } // White is the boundary.
+    // println!("Fill args: {}", arguments.len());
     for chunk in arguments.chunks_exact(3) {
         let (x, y) = xy_from_triple(chunk);
         if x >= WIDTH || y >= HEIGHT {
-            //println!("Fill weird xy! {} {}", x, y);
+            // println!("Fill weird xy! {} {}", x, y);
             continue
         }
         let mut queue: Vec<(usize, usize)> = vec![(x, y)];
