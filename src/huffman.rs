@@ -1,6 +1,7 @@
 // This is responsible for decompressing Huffman-packed data.
 // https://github.com/scummvm/scummvm/blob/master/engines/sci/resource/decompressor.cpp
 // https://sciwiki.sierrahelp.com/index.php/SCI_Specifications:_Chapter_2_-_Resource_files#Decompression_algorithm_HUFFMAN
+// https://github.com/icefallgames/SCICompanion/blob/master/SCICompanionLib/Src/Util/Codec.cpp
 
 use crate::bitstream_msb::{self, BitStreamMSB};
 
