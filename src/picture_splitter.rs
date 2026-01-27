@@ -61,11 +61,11 @@ fn desired_arguments_length(action: Action, args: &[u8], is_pattern: bool) -> us
         Action::SetPriorityColour => { 1 }
         Action::DisablePriority => { 0 }
         Action::SetPattern => { 1 }
-        Action::ShortRelativePatterns => {}
-        Action::MediumRelativePatterns => {}
+        Action::ShortRelativePatterns => { desired_arguments_length_short_patterns(args, is_pattern) }
+        Action::MediumRelativePatterns => { desired_arguments_length_medium_patterns(args, is_pattern) }
         Action::LongPatterns => { desired_arguments_length_long_patterns(args, is_pattern) }
-        Action::ShortRelativeLines => { }
-        Action::MediumRelativeLines => {  }
+        Action::ShortRelativeLines => { desired_arguments_length_short_lines(args) }
+        Action::MediumRelativeLines => { desired_arguments_length_medium_lines(args) }
         Action::LongLines => { desired_arguments_length_long_lines(args) }
         Action::FloodFill => { desired_arguments_length_fills(args) }
         Action::SetControlColour => { 1 }
@@ -101,9 +101,25 @@ fn desired_arguments_length_extensions(args: &[u8]) -> usize {
             15 // Command (1) + Priority table (14).
         },
         _ => {
-            panic!("Unrecognised extended operation! Code: {}", op);
+            panic!("Unrecognised extended operation! Command: {}", command);
         },
     }
+}
+
+fn desired_arguments_length_short_lines(args: &[u8]) -> usize {
+    let mut bytes = 3;
+    while args[bytes] < 0xf0 {
+        bytes += 1;
+    }
+    return bytes;
+}
+
+fn desired_arguments_length_medium_lines(args: &[u8]) -> usize {
+    let mut bytes = 3;
+    while args[bytes] < 0xf0 {
+        bytes += 2;
+    }
+    return bytes;
 }
 
 // Long lines are at least 1 multiple of 3.
@@ -130,8 +146,25 @@ fn desired_arguments_length_fills(args: &[u8]) -> usize {
 fn desired_arguments_length_long_patterns(args: &[u8], is_pattern: bool) -> usize {
     let mut bytes = 0;
     let chunk_size = if is_pattern { 4 } else { 3 };
-    loop {
-        if args[bytes] >= 0xf0 { break }
+    while args[bytes] < 0xf0 {
+        bytes += chunk_size;
+    }
+    return bytes;
+}
+
+fn desired_arguments_length_medium_patterns(args: &[u8], is_pattern: bool) -> usize {
+    let mut bytes = if is_pattern { 4 } else { 3 };
+    let chunk_size = if is_pattern { 3 } else { 2 };
+    while args[bytes] < 0xf0 {
+        bytes += chunk_size;
+    }
+    return bytes;
+}
+
+fn desired_arguments_length_short_patterns(args: &[u8], is_pattern: bool) -> usize {
+    let mut bytes = if is_pattern { 4 } else { 3 };
+    let chunk_size = if is_pattern { 2 } else { 1 };
+    while args[bytes] < 0xf0 {
         bytes += chunk_size;
     }
     return bytes;
@@ -168,24 +201,18 @@ mod tests {
     #[test]
     fn it_splits() {
         let resource: Vec<u8> = vec![
-            1, // Should be ignored.
-            0xf0, 1, 2, 3,
+            0xf0, 1,
             0xf1,
-            0xf2,
             0xff,
         ];
         let result = super::split(&resource);
         let expected: Vec<super::ActionArguments> = vec![
             ActionArguments{
                 action: Action::SetVisualColour,
-                arguments: vec![1, 2, 3],
+                arguments: vec![1],
             },
             ActionArguments{
                 action: Action::DisableVisual,
-                arguments: vec![],
-            },
-            ActionArguments{
-                action: Action::SetPriorityColour,
                 arguments: vec![],
             },
             ActionArguments{
