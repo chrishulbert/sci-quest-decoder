@@ -19,12 +19,14 @@ This supports SCI0 games (EGA), not SCI1 (VGA).
 
 ![Alien tourist](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn66.f2.vi278.li4.animation.png)
 
-This generates big uncompressed PNGs. To compress them, install `pngquant` and `apngasm` then run `make compress` to make them all a reasonable size.
+This generates big uncompressed PNGs. The reason they're so big is that I wanted the aspect ratio to be pixel-perfect, necessitating such large scale. To compress them, install `pngquant` and `apngasm` then run `make compress` to make them all a reasonable size.
 
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn128.f3.vi520.li1.animation.png)
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn92.f1.vi222.li2.animation.png)
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn128.f3.vi520.li0.animation.png)
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn92.f1.vi222.li5.animation.png)
+
+By default this upscales using the XBRZ scaler. If you prefer the pixely look (honestly, I can never decide) then open renderer.rs and change `const USE_XBRZ: bool = false;`
 
 ## New Years Mystery
 
@@ -59,5 +61,49 @@ If you're interested, I also wrote decoders for the following:
 * https://slattstudio.com
 * https://github.com/wjp/freesci-archive
 * https://sciwiki.sierrahelp.com/index.php/SCI_Specifications
+* https://www.agidev.com/articles/agispec/agispecs-7.html
+* https://github.com/icefallgames/SCICompanion
+
+## Art
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn1.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn11.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn112.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn114.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn15.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn153.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn154.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn20.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn25.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn30.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn47.f4.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn48.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn5.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn50.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn525.f3.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn6.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn65.f2.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn72.f1.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn80.f3.static.png)
+
+![Picture](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.picture.rn95.f1.static.png)
 
 ![Goodbye](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn67.f2.vi279.li4.animation.png)

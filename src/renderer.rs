@@ -1,19 +1,18 @@
 // This is responsible for rendering views to PNGs.
 // This deals with the aspect ratio issues and expanding to a visible size.
+// A 'dither double' is where both nibbles contain an EGA palette index.
 
 use crate::view::{Loop, Cel};
 use crate::png;
 use crate::picture;
-use crate::palette::{PALETTE, TRANSPARENT};
+use crate::palette;
 use crate::xbrz;
 
 // The game is originally rendered at 320x200 on a 4:3 screen, so pixels are 1.2x higher than wide.
 // Resizing at 5w x 6h preserves this ratio.
 const WIDTH_MULTIPLIER: usize = 5;
 const HEIGHT_MULTIPLIER: usize = 6;
-// const WIDTH_MULTIPLIER: usize = 3;
-// const HEIGHT_MULTIPLIER: usize = 3;
-const USE_XBRZ: bool = false;
+const USE_XBRZ: bool = true;
 
 // It's eligible to be an animation even if sizes are different.
 // Padding is added to the top and right, which seems to align cels nicely on space quest.
@@ -21,13 +20,14 @@ pub fn is_animation(viewloop: &Loop) -> bool {
     viewloop.cels.len() >= 2
 }
 
+// This assumes it's normal pixels, not dither-doubles.
 pub fn apng_from_loop(viewloop: &Loop) -> Vec<u8> {
     // Get max height.
     let width = viewloop.cels.iter().map(|c| c.width).max().unwrap();
     let height = viewloop.cels.iter().map(|c| c.height).max().unwrap();
     let frames: Vec<Vec<u32>> = viewloop.cels.iter()
         .map(|c| pad_cel(c, width, height))
-        .map(|c| scaled_rgbas_from_cel(&c))
+        .map(|c| scaled_rgbas_from_cel(&c, false))
         .collect();
     png::apng_data(
         width * WIDTH_MULTIPLIER,
@@ -39,7 +39,7 @@ pub fn png_from_cel(cel: &Cel) -> Vec<u8> {
     png::png_data(
         cel.width * WIDTH_MULTIPLIER,
         cel.height * HEIGHT_MULTIPLIER,
-        &scaled_rgbas_from_cel(cel))
+        &scaled_rgbas_from_cel(cel, false))
 }
 
 pub fn png_from_picture(picture: &picture::Picture) -> Vec<u8> {
@@ -48,43 +48,47 @@ pub fn png_from_picture(picture: &picture::Picture) -> Vec<u8> {
         height: picture::HEIGHT,
         pixels: picture.picture.clone(),
     };
-    png_from_cel(&cel)
+    png::png_data(
+        cel.width * WIDTH_MULTIPLIER,
+        cel.height * HEIGHT_MULTIPLIER,
+        &scaled_rgbas_from_cel(&cel, true))
 }
 
 // Increase the width/height of a cel.
+// This assumes it's not using 'dither double' pixels.
 fn pad_cel(cel: &Cel, width: usize, height: usize) -> Cel {
     if cel.width == width && cel.height == height { return cel.clone(); }
     let mut pixels: Vec<u8> = Vec::with_capacity(width * height);
     // Pad the height:
     let extra_height = height - cel.height;
     let extra_pixels_top = extra_height * width;
-    pixels.extend(vec![TRANSPARENT; extra_pixels_top]);
+    pixels.extend(vec![palette::TRANSPARENT; extra_pixels_top]);
     // Pad the width:
     let extra_width = width - cel.width;
     for row in cel.pixels.chunks_exact(cel.width) {
         pixels.extend_from_slice(row);
         for _ in 0..extra_width {
-            pixels.push(TRANSPARENT);
+            pixels.push(palette::TRANSPARENT);
         }
     }
     Cel { width, height, pixels }
 }
 
 // This converts an unscaled cel to scaled rgbas.
-fn scaled_rgbas_from_cel(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     if USE_XBRZ {
-        scaled_rgbas_from_cel_xbrz(cel)
+        scaled_rgbas_from_cel_xbrz(cel, is_dither_double)
     } else {
-        scaled_rgbas_from_cel_nearest_neighbour(cel)
+        scaled_rgbas_from_cel_nearest_neighbour(cel, is_dither_double)
     }
 }
 
-fn scaled_rgbas_from_cel_nearest_neighbour(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel_nearest_neighbour(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     let mut rgbas: Vec<u32> = Vec::with_capacity(cel.width * cel.height * WIDTH_MULTIPLIER * HEIGHT_MULTIPLIER);
     for row in cel.pixels.chunks_exact(cel.width) {
         for _ in 0..HEIGHT_MULTIPLIER {
             for p in row {
-                let rgba = PALETTE[*p as usize];
+                let rgba = rgba_from_indexed_colour(*p, is_dither_double);
                 for _ in 0..WIDTH_MULTIPLIER {
                     rgbas.push(rgba);
                 }
@@ -94,17 +98,17 @@ fn scaled_rgbas_from_cel_nearest_neighbour(cel: &Cel) -> Vec<u32> {
     rgbas
 }
 
-fn scaled_rgbas_from_cel_crt(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel_crt(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     if WIDTH_MULTIPLIER == 6 && HEIGHT_MULTIPLIER == 6 {
-        scaled_rgbas_from_cel_crt_6(cel)
+        scaled_rgbas_from_cel_crt_6(cel, is_dither_double)
     } else if WIDTH_MULTIPLIER == 3 && HEIGHT_MULTIPLIER == 3 {
-        scaled_rgbas_from_cel_crt_3(cel)
+        scaled_rgbas_from_cel_crt_3(cel, is_dither_double)
     } else {
         panic!("CRT scaling only supports 6x6 or 3x3!");
     }
 }
 
-fn scaled_rgbas_from_cel_crt_6(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel_crt_6(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     // Convert into this pattern:
     // rrggbb
     // rrggbb
@@ -121,7 +125,7 @@ fn scaled_rgbas_from_cel_crt_6(cel: &Cel) -> Vec<u32> {
         line_rgb.clear();
         line_gbr.clear();
         for pixel in row {
-            let rgba = PALETTE[*pixel as usize];
+            let rgba = rgba_from_indexed_colour(*pixel, is_dither_double);
             let r = rgba & 0xff0000ff;
             let g = rgba & 0xff00ff;
             let b = rgba & 0xffff;
@@ -158,7 +162,7 @@ fn scaled_rgbas_from_cel_crt_6(cel: &Cel) -> Vec<u32> {
     rgbas
 }
 
-fn scaled_rgbas_from_cel_crt_3(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel_crt_3(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     // Convert into this pattern:
     // rgb
     // brg
@@ -174,7 +178,7 @@ fn scaled_rgbas_from_cel_crt_3(cel: &Cel) -> Vec<u32> {
         line_brg.clear();
         line_gbr.clear();
         for pixel in row {
-            let rgba = PALETTE[*pixel as usize];
+            let rgba = rgba_from_indexed_colour(*pixel, is_dither_double);
             let r = rgba & 0xff0000ff;
             let g = rgba & 0xff00ff;
             let b = rgba & 0xffff;
@@ -195,9 +199,9 @@ fn scaled_rgbas_from_cel_crt_3(cel: &Cel) -> Vec<u32> {
     rgbas
 }
 
-fn scaled_rgbas_from_cel_xbrz(cel: &Cel) -> Vec<u32> {
+fn scaled_rgbas_from_cel_xbrz(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     // Scale up using xbrz:
-    let unscaled_rgbas: Vec<u32> = cel.pixels.iter().map(|p| PALETTE[*p as usize]).collect();
+    let unscaled_rgbas: Vec<u32> = cel.pixels.iter().map(|p| rgba_from_indexed_colour(*p, is_dither_double)).collect();
     let bigger_dimension = HEIGHT_MULTIPLIER.max(WIDTH_MULTIPLIER);
     let scaled_square = xbrz::scale(bigger_dimension as u8, &unscaled_rgbas, cel.width as u32, cel.height as u32);
     if WIDTH_MULTIPLIER == HEIGHT_MULTIPLIER {
@@ -231,4 +235,21 @@ fn interpolate_rgba(x: u32, y: u32) -> u32 {
     let b = (b1 + b2) / 2;
     let a = (a1 + a2) / 2;
     (r << 24) + (g << 16) + (b << 8) + a
+}
+
+// This supports both cels (no dither doubles) and pics (dither doubles - each nibble has a colour).
+fn rgba_from_indexed_colour(index: u8, is_dither_double: bool) -> u32 {
+    if is_dither_double {
+        let index_a = index & 0xf;
+        let index_b = index >> 4;
+        if index_a == index_b { // No dithering.
+            palette::PALETTE[index_a as usize]
+        } else { // Average them.
+            let a = palette::PALETTE[index_a as usize];
+            let b = palette::PALETTE[index_b as usize];
+            interpolate_rgba(a, b)
+        }
+    } else {
+        palette::PALETTE[index as usize]
+    }
 }

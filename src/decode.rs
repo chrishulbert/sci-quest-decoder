@@ -13,9 +13,9 @@ pub fn decode(path: &str) {
 
     // Pictures:
     for entry in &map.entries {
-        if entry.resource_number != 15 { continue }
         if entry.resource_type != map::ResourceType::Picture { continue }
-        let resource = resource_reader::read(entry, &files);
+        println!("Decoding picture, resource number: {}", entry.resource_number);
+        let resource = resource_reader::read(entry, &files); // Pics all tend to be huffman.
         let picture = picture::Picture::parse(&resource);
         let name = format!("Output.picture.rn{}.f{}.static.png", entry.resource_number, entry.file);
         let png = renderer::png_from_picture(&picture);
@@ -23,24 +23,24 @@ pub fn decode(path: &str) {
     }
 
     // Views:
-    // for (vi, entry) in map.entries.iter().enumerate() {
-    //     if entry.resource_type != map::ResourceType::View { continue }
-    //     let resource = resource_reader::read(entry, &files);
-    //     let view = view::View::parse(&resource);
-    //     for (li, l) in view.loops.iter().enumerate() {
-    //         if renderer::is_animation(l) {
-    //             // Animated.
-    //             let name = format!("Output.view.rn{}.f{}.vi{}.li{}.animation.png", entry.resource_number, entry.file, vi, li);
-    //             let png = renderer::apng_from_loop(l);
-    //             std::fs::write(name, png).unwrap();
-    //         } else {
-    //             // Not animated.
-    //             for (ci, c) in l.cels.iter().enumerate() {
-    //                 let name = format!("Output.view.rn{}.f{}.vi{}.li{}.ci{}.static.png", entry.resource_number, entry.file, vi, li, ci);
-    //                 let png = renderer::png_from_cel(c);
-    //                 std::fs::write(name, png).unwrap();
-    //             }
-    //         }
-    //     }
-    // }
+    for (vi, entry) in map.entries.iter().enumerate() {
+        if entry.resource_type != map::ResourceType::View { continue }
+        let resource = resource_reader::read(entry, &files); // Views tend to be LZW.
+        let view = view::View::parse(&resource);
+        for (li, l) in view.loops.iter().enumerate() {
+            if renderer::is_animation(l) {
+                // Animated.
+                let name = format!("Output.view.rn{}.f{}.vi{}.li{}.animation.png", entry.resource_number, entry.file, vi, li);
+                let png = renderer::apng_from_loop(l);
+                std::fs::write(name, png).unwrap();
+            } else {
+                // Not animated.
+                for (ci, c) in l.cels.iter().enumerate() {
+                    let name = format!("Output.view.rn{}.f{}.vi{}.li{}.ci{}.static.png", entry.resource_number, entry.file, vi, li, ci);
+                    let png = renderer::png_from_cel(c);
+                    std::fs::write(name, png).unwrap();
+                }
+            }
+        }
+    }
 }

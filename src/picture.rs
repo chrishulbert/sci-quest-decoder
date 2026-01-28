@@ -4,14 +4,21 @@
 // https://github.com/wjp/freesci-archive/blob/master/src/scicore/decompress01.c
 
 use crate::palette;
-use crate::palette::PALETTE;
 use crate::picture_splitter;
 
 pub const WIDTH: usize = 320;
 pub const HEIGHT: usize = 190;
 
+pub const DEFAULT_PALETTE: [u8; 40] = [
+    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x88,
+    0x88, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x88,
+    0x88, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
+    0x08, 0x91, 0x2a, 0x3b, 0x4c, 0x5d, 0x6e, 0x88,
+];
+
 pub struct Picture {
-    pub picture: Vec<u8>,
+    pub picture: Vec<u8>, // Unlike cels, pictures support dithering, so two colour indices are stored in each nibble of the u8.
 }
 
 impl Picture {
@@ -23,24 +30,27 @@ impl Picture {
 }
 
 fn draw(actions: &[picture_splitter::ActionArguments]) -> Vec<u8> {
-    let mut picture: Vec<u8> = vec![palette::WHITE; WIDTH * HEIGHT];
+    let background = dither_double_from_colours(palette::WHITE, palette::WHITE);
+    let mut picture: Vec<u8> = vec![background; WIDTH * HEIGHT];
     let mut is_drawing = false;
-    let mut colour = palette::WHITE;
+    let mut colour = background;
     let mut is_rectangle = false;
     let mut is_pattern = false;
     let mut pattern_size: u8 = 0;
+    let mut palette = DEFAULT_PALETTE.to_vec();
     for a in actions {
         match a.action {
             // Colour:
             picture_splitter::Action::SetVisualColour => {
                 is_drawing = true;
-                // Sometimes this is oddly empty. Sometimes it has >1 args, i have no idea why!
-                if !a.arguments.is_empty() {
-                    colour = a.arguments[0];
-                    if colour as usize >= PALETTE.len() {
-                        colour = 0;
-                    }
+                if a.arguments.is_empty() { continue }
+                let value = a.arguments[0] as usize;
+                let index = value % palette.len();
+                let palette_number = value / palette.len();
+                if palette_number > 0 {
+                    panic!("Multiple palettes not supported!"); // PQ2, SQ3, LSL2+3, all don't use secondary palettes.
                 }
+                colour = palette[index];
             }
             picture_splitter::Action::DisableVisual => {
                 is_drawing = false;
@@ -126,18 +136,34 @@ fn draw(actions: &[picture_splitter::ActionArguments]) -> Vec<u8> {
             // Etc:
             picture_splitter::Action::FloodFill => {
                 if is_drawing {
-                    fill(&mut picture, colour, &a.arguments);
+                    fill(&mut picture, colour, &a.arguments, background);
                 }
             }
             picture_splitter::Action::CommandExtensions => {
                 if a.arguments.is_empty() { continue }
                 let command = a.arguments[0];
+                let ext_args = &a.arguments[1..];
                 match command {
                     0 => { // Set palette entry.
-                        println!("Set palette entry! {}", describe_buf(&a.arguments))
+                        for chunk in ext_args.chunks_exact(2) {
+                            let index_and_palette = chunk[0] as usize;
+                            let new_colour = chunk[1];
+                            let index = index_and_palette % palette.len();
+                            let palette_number = index_and_palette / palette.len();
+                            if palette_number > 0 {
+                                panic!("Multiple palettes not supported!"); // PQ2, SQ3, LSL2+3, all don't use secondary palettes.
+                            }
+                            palette[index] = new_colour;
+                        }
                     }
                     1 => { // Set entire palette.
-                        println!("Set entire palette! {}", describe_buf(&a.arguments))
+                        let palette_number = ext_args[0];
+                        if palette_number == 0 { // Ignore non-primary palettes.
+                            let new_palette = &ext_args[1..];
+                            for (i, new_colour) in new_palette.iter().enumerate() {
+                                palette[i] = *new_colour;
+                            }
+                        }
                     }
                     _ => {} // Ignore monochrome / sci01 stuff.
                 }                
@@ -151,6 +177,11 @@ fn draw(actions: &[picture_splitter::ActionArguments]) -> Vec<u8> {
         }
     }
     picture
+}
+
+// To support the dithering, this converts two 0-15 colours into a 'dither double'.
+fn dither_double_from_colours(a: u8, b: u8) -> u8 {
+    (a << 4) + b
 }
 
 fn draw_short_relative_patterns(picture: &mut [u8], arguments: &[u8], colour: u8, pattern_size: usize, is_pattern: bool, is_rectangle: bool) {
@@ -434,8 +465,9 @@ fn draw_short_relative_lines(picture: &mut [u8], colour: u8, arguments: &[u8]) {
     }
 }
 
-fn fill(picture: &mut [u8], colour: u8, arguments: &[u8]) {
-    if colour == palette::WHITE { return } // White is the boundary.
+// Fills all background-coloured pixels with colour.
+fn fill(picture: &mut [u8], colour: u8, arguments: &[u8], background: u8) {
+    if colour == background { return } // White is the boundary, so this would just end up in an infinite loop.
     // println!("Fill args: {}", arguments.len());
     for chunk in arguments.chunks_exact(3) {
         let (x, y) = xy_from_triple(chunk);
@@ -448,7 +480,7 @@ fn fill(picture: &mut [u8], colour: u8, arguments: &[u8]) {
             let x = xy.0; 
             let y = xy.1; 
             let offset = y * WIDTH + x;
-            if picture[offset] != palette::WHITE { continue }
+            if picture[offset] != background { continue }
             picture[offset] = colour;
             if x > 0 { queue.push((x-1, y)); } // Left.
             if x < WIDTH-1 { queue.push((x+1, y)); } // Right.
