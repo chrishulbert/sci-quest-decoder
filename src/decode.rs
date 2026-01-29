@@ -25,6 +25,7 @@ pub fn decode(path: &str) {
     // Views:
     for (vi, entry) in map.entries.iter().enumerate() {
         if entry.resource_type != map::ResourceType::View { continue }
+        println!("Decoding view, resource number: {}", entry.resource_number);
         let resource = resource_reader::read(entry, &files); // Views tend to be LZW.
         let view = view::View::parse(&resource);
         for (li, l) in view.loops.iter().enumerate() {
