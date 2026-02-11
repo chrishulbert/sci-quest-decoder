@@ -26,7 +26,7 @@ This generates big uncompressed PNGs. The reason they're so big is that I wanted
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn128.f3.vi520.li0.animation.png)
 ![Jello](https://github.com/chrishulbert/sci-quest-decoder/raw/main/readme/Output.view.rn92.f1.vi222.li5.animation.png)
 
-By default this upscales using the XBRZ scaler. If you prefer the pixely look (honestly, I can never decide) then open renderer.rs and change `const USE_XBRZ: bool = false;`
+By default this upscales using the ScaleFX scaler. If you prefer the pixely look (honestly, I can never decide) then open renderer.rs and change `const USE_SCALEFX: bool = false;`
 
 ## New Years Mystery
 

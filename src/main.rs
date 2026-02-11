@@ -12,7 +12,7 @@ mod renderer;
 mod resource_files;
 mod resource_reader;
 mod view;
-mod xbrz;
+mod scalefx;
 
 fn main() {
     println!("-=[ SCI Quest Decoder ]=-");

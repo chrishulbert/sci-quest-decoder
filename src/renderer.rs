@@ -6,13 +6,15 @@ use crate::view::{Loop, Cel};
 use crate::png;
 use crate::picture;
 use crate::palette;
-use crate::xbrz;
+use crate::scalefx;
 
 // The game is originally rendered at 320x200 on a 4:3 screen, so pixels are 1.2x higher than wide.
 // Resizing at 5w x 6h preserves this ratio.
+// Since ScaleFX natively scales to 9x, some tricky code exists to take it down to 5x6, so if you
+// want to use other ratios, you'll need to disable ScaleFX.
 const WIDTH_MULTIPLIER: usize = 5;
 const HEIGHT_MULTIPLIER: usize = 6;
-const USE_XBRZ: bool = true;
+const USE_SCALEFX: bool = true;
 
 // It's eligible to be an animation even if sizes are different.
 // Padding is added to the top and right, which seems to align cels nicely on space quest.
@@ -76,8 +78,8 @@ fn pad_cel(cel: &Cel, width: usize, height: usize) -> Cel {
 
 // This converts an unscaled cel to scaled rgbas.
 fn scaled_rgbas_from_cel(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
-    if USE_XBRZ {
-        scaled_rgbas_from_cel_xbrz(cel, is_dither_double)
+    if USE_SCALEFX {
+        scaled_rgbas_from_cel_scalefx(cel, is_dither_double)
     } else {
         scaled_rgbas_from_cel_nearest_neighbour(cel, is_dither_double)
     }
@@ -199,24 +201,38 @@ fn scaled_rgbas_from_cel_crt_3(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
     rgbas
 }
 
-fn scaled_rgbas_from_cel_xbrz(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
-    // Scale up using xbrz:
+fn scaled_rgbas_from_cel_scalefx(cel: &Cel, is_dither_double: bool) -> Vec<u32> {
+    assert!(WIDTH_MULTIPLIER == 5 && HEIGHT_MULTIPLIER == 6);
+
+    // Scale to 9x:
     let unscaled_rgbas: Vec<u32> = cel.pixels.iter().map(|p| rgba_from_indexed_colour(*p, is_dither_double)).collect();
-    let bigger_dimension = HEIGHT_MULTIPLIER.max(WIDTH_MULTIPLIER);
-    let scaled_square = xbrz::scale(bigger_dimension as u8, &unscaled_rgbas, cel.width as u32, cel.height as u32);
-    if WIDTH_MULTIPLIER == HEIGHT_MULTIPLIER {
-        return scaled_square
+    let (_, sfx_height, sfx_pixels) = scalefx::scale9x(cel.width, cel.height, &unscaled_rgbas);
+
+    // Shrink horizontally to 5x:
+    let mut scaled_horizontal: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * sfx_height);
+    for chunk in sfx_pixels.chunks_exact(9) {
+        scaled_horizontal.push(interpolate_rgba(chunk[0], chunk[1]));
+        scaled_horizontal.push(interpolate_rgba(chunk[2], chunk[3]));
+        scaled_horizontal.push(chunk[4]); // Would it look nicer if 4 was interpolated with both 3 and 5?
+        scaled_horizontal.push(interpolate_rgba(chunk[5], chunk[6]));
+        scaled_horizontal.push(interpolate_rgba(chunk[7], chunk[8]));
     }
-    // For 5x6, we can tweak to get the perfect aspect ratio:
-    assert!(WIDTH_MULTIPLIER == 5);
-    assert!(HEIGHT_MULTIPLIER == 6);
+
+    // Scale vertically from 9x to 6x, by splitting into each 3 row triplet, and outputting 2 rows:
     let mut scaled_aspect: Vec<u32> = Vec::with_capacity(cel.width * WIDTH_MULTIPLIER * cel.height * HEIGHT_MULTIPLIER);
-    for chunk in scaled_square.chunks_exact(bigger_dimension) {
-        scaled_aspect.push(chunk[0]);
-        scaled_aspect.push(chunk[1]);
-        scaled_aspect.push(interpolate_rgba(chunk[2], chunk[3]));
-        scaled_aspect.push(chunk[4]);
-        scaled_aspect.push(chunk[5]);
+    let scaled_row_size = cel.width * WIDTH_MULTIPLIER;
+    for triplet in scaled_horizontal.chunks_exact(scaled_row_size * 3) {
+        // Split this triplet of scaled rows into each of the scaled rows:
+        let row_top = &triplet[..scaled_row_size];
+        let row_mid = &triplet[scaled_row_size..scaled_row_size*2];
+        let row_bot = &triplet[scaled_row_size*2..];
+        // Interpolate them, so the middle row gets interpolated with both the top and bottom, but half-weighted each time.
+        for (top, mid) in row_top.iter().zip(row_mid) {
+            scaled_aspect.push(interpolate_rgba_weighted(*top, *mid));
+        }
+        for (bot, mid) in row_bot.iter().zip(row_mid) {
+            scaled_aspect.push(interpolate_rgba_weighted(*bot, *mid));
+        }
     }
     scaled_aspect
 }
@@ -234,6 +250,23 @@ fn interpolate_rgba(x: u32, y: u32) -> u32 {
     let g = (g1 + g2) / 2;
     let b = (b1 + b2) / 2;
     let a = (a1 + a2) / 2;
+    (r << 24) + (g << 16) + (b << 8) + a
+}
+
+// Interpolates the two colours, giving the first one double weight.
+fn interpolate_rgba_weighted(x: u32, y: u32) -> u32 {
+    let r1 = x >> 24;
+    let g1 = (x >> 16) & 0xff;
+    let b1 = (x >> 8) & 0xff;
+    let a1 = x & 0xff;
+    let r2 = y >> 24;
+    let g2 = (y >> 16) & 0xff;
+    let b2 = (y >> 8) & 0xff;
+    let a2 = y & 0xff;
+    let r = (r1 * 2 + r2) / 3;
+    let g = (g1 * 2 + g2) / 3;
+    let b = (b1 * 2 + b2) / 3;
+    let a = (a1 * 2 + a2) / 3;
     (r << 24) + (g << 16) + (b << 8) + a
 }
 
